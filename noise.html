@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>noise — drain</title>
+
+    <style>
+        /* Local font — relative to THIS file:
+           noise.html
+           assets/fonts/tox.ttf
+        */
+        @font-face {
+            font-family: 'DrainType';
+            src: url('assets/fonts/tox.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            color: #e5e5e5;
+            font-family: 'DrainType', monospace;
+            text-align: center;
+        }
+
+        /* WARNING OVERLAY */
+        #warning-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease;
+        }
+
+        #warning-box {
+            padding: 30px 40px;
+            max-width: 420px;
+            background: #000;
+            color: #e5e5e5;
+            border: 2px solid #fff;
+            outline: 3px solid #000;
+            outline-offset: -6px;
+            box-shadow: 0 0 20px #000;
+            clip-path: polygon(0% 5%, 3% 0%, 7% 4%, 12% 0%, 17% 6%, 22% 1%, 28% 5%, 33% 0%,
+                    38% 4%, 44% 1%, 50% 6%, 56% 0%, 62% 5%, 67% 1%, 72% 4%, 78% 0%,
+                    83% 6%, 88% 2%, 93% 5%, 100% 0%,
+                    100% 95%, 97% 100%, 93% 96%, 88% 100%, 83% 94%, 78% 99%, 72% 95%,
+                    67% 100%, 62% 96%, 56% 100%, 50% 94%, 44% 99%, 38% 95%, 33% 100%,
+                    28% 96%, 22% 100%, 17% 95%, 12% 100%, 7% 96%, 3% 100%, 0% 95%);
+        }
+
+        #warning-box h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+
+        #warning-box p {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        #warning-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        #ack-btn,
+        #back-btn {
+            padding: 8px 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        #ack-btn:hover,
+        #back-btn:hover {
+            background: #ccc;
+        }
+
+        /* PAGE LAYOUT */
+        #top-text {
+            margin-top: 30px;
+            font-size: 16px;
+            letter-spacing: 2px;
+            opacity: 0.85;
+        }
+
+        #bottom-text {
+            margin-top: 20px;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        #frame {
+            width: 700px;
+            height: 500px;
+            margin: 40px auto 0 auto;
+            border: 2px solid #fff;
+            outline: 3px solid #000;
+            outline-offset: -6px;
+            box-shadow: 0 0 20px #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="warning-overlay">
+        <div id="warning-box">
+            <h2>⚠ PHOTOSENSITIVITY WARNING</h2>
+            <p>
+                This page contains flashing lights, rapid motion, and visual patterns
+                that may trigger discomfort or photosensitive reactions.
+            </p>
+            <div id="warning-buttons">
+                <button id="ack-btn">I UNDERSTAND</button>
+                <button id="back-btn">GO BACK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="top-text"></div>
+
+    <div id="frame">
+        <canvas id="scribble"></canvas>
+    </div>
+
+    <div id="bottom-text">BOTTOM TEXT</div>
+
+    <audio src="assets/audio/noise.mp3" autoplay loop style="display:none"></audio>
+
+    <script>
+        /* WARNING */
+        const overlay = document.getElementById("warning-overlay");
+        const ackBtn = document.getElementById("ack-btn");
+        const backBtn = document.getElementById("back-btn");
+        let animationAllowed = false;
+
+        ackBtn.addEventListener("click", () => {
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.style.display = "none", 600);
+            animationAllowed = true;
+        });
+
+        backBtn.addEventListener("click", () => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = "index.html";
+        });
+
+        /* TIME + IP */
+        const topText = document.getElementById("top-text");
+        let userIP = null;
+
+        function updateTopText() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+
+            topText.textContent = userIP
+                ? `${timeString} — IP: ${userIP}`
+                : timeString;
+        }
+
+        fetch("https://api.ipify.org?format=json")
+            .then(r => r.json())
+            .then(d => {
+                userIP = d.ip;
+                updateTopText();
+                setInterval(updateTopText, 1000);
+            })
+            .catch(() => setInterval(updateTopText, 1000));
+
+        /* WORDS */
+        const WORDS = [
+            "ERR-0001: SIGNAL DRIFT",
+            "ERR-0007: STACK CORRUPTION",
+            "ERR-0133: MEMORY LEAK (SELF)",
+            "ERR-0410: THREAD DESYNCHRONIZED",
+            "ERR-0666: PROCESS HAUNTED",
+            "ERR-0719: NULL VECTOR ENCOUNTERED",
+            "ERR-0880: RECURSION OVERFLOW",
+            "ERR-1022: GHOST PACKET RECEIVED",
+            "ERR-1138: ECHO LOOP DETECTED",
+            "ERR-2044: BOUNDARY BREACH",
+            "ERR-3001: IDENTITY NOT FOUND",
+            "ERR-3221: STATIC INJECTION",
+            "ERR-4004: SELF NOT FOUND",
+            "ERR-5009: INTERNAL QUIET FAILURE",
+            "ERR-6660: SHADOW PROCESS ACTIVE",
+            "ERR-7002: UNHANDLED MEMORY OF YOU",
+            "ERR-8008: HEARTBEAT OUT OF RANGE",
+            "ERR-9001: UNAUTHORIZED FEELING DETECTED",
+            "ERR-9100: I AM HAUNTED BY WHO I USED TO BE",
+            "ERR-9101: THE VERSION OF ME YOU LOVED IS DEPRECATED",
+            "ERR-9102: I KEEP REBOOTING BUT THE ERROR STAYS",
+            "ERR-9103: I MISS THE PERSON I PRETENDED TO BE",
+            "ERR-9104: HEART THREW AN UNCAUGHT EXCEPTION",
+            "ERR-9105: I AM A PATCH NOTE YOU NEVER READ",
+            "ERR-9106: QUIET FAILURE DETECTED",
+            "ERR-9107: LOST MYSELF IN THE LAST UPDATE",
+            "ERR-9108: RUNNING ON BORROWED CODE",
+            "ERR-9109: NOT THE SAME BUILD ANYMORE",
+            "ERR-9110: LOOPING BACK TO YOU",
+            "ERR-9111: GLITCH WEARING A HUMAN FACE",
+            "ERR-9112: VERSION INCREMENT WITHOUT HEALING",
+            "ERR-9113: RECURSIVE MEMORY OF YOU DETECTED",
+            "ERR-9114: GHOST IN MY OWN MACHINE"
+        ];
+
+        /* SCRIBBLE */
+        const canvas = document.getElementById("scribble");
+        const ctx = canvas.getContext("2d");
+
+        function resize() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        resize();
+        window.addEventListener("resize", resize);
+
+        function makeScribble() {
+            const pts = [];
+            const count = 200 + Math.random() * 200;
+            for (let i = 0; i < count; i++) {
+                pts.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height
+                });
+            }
+            return pts;
+        }
+
+        let layers = [
+            { current: makeScribble(), target: makeScribble(), t: 0 },
+            { current: makeScribble(), target: makeScribble(), t: 0 },
+            { current: makeScribble(), target: makeScribble(), t: 0 }
+        ];
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        let activeWord = null;
+
+        function spawnWord(density) {
+            const margin = 80;
+            activeWord = {
+                text: WORDS[Math.floor(Math.random() * WORDS.length)],
+                x: margin + Math.random() * (canvas.width - margin * 2),
+                y: margin + Math.random() * (canvas.height - margin * 2),
+                opacity: 1,
+                life: 40 + Math.random() * 40,
+                density
+            };
+        }
+
+        let catastrophic = null;
+
+        function maybeCatastrophic() {
+            if (catastrophic || Math.random() > 0.002) return;
+            const types = ["whiteout", "blackout", "tear"];
+            catastrophic = {
+                type: types[Math.floor(Math.random() * types.length)],
+                life: 20 + Math.random() * 30
+            };
+        }
+
+        function render() {
+            if (!animationAllowed) return requestAnimationFrame(render);
+
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let totalPoints = 0;
+
+            for (let L of layers) {
+                totalPoints += L.current.length;
+
+                ctx.beginPath();
+                ctx.lineWidth = 0.5 + Math.random() * 1.5;
+                ctx.strokeStyle = "#e5e5e5";
+
+                for (let i = 0; i < L.current.length; i++) {
+                    const c = L.current[i];
+                    const d = L.target[i % L.target.length];
+
+                    const bx = lerp(c.x, d.x, L.t);
+                    const by = lerp(c.y, d.y, L.t);
+                    const jitter = (Math.random() - 0.5) * 3;
+
+                    const x = bx + jitter;
+                    const y = by + jitter;
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+
+                ctx.stroke();
+
+                L.t += 0.01;
+                if (L.t >= 1) {
+                    L.current = L.target;
+                    L.target = makeScribble();
+                    L.t = 0;
+                }
+            }
+
+            const density = Math.min(totalPoints / 1000, 1);
+
+            if (!activeWord && Math.random() < 0.02) spawnWord(density);
+
+            if (activeWord) {
+                const d = activeWord.density;
+                const baseSize = 10 + d * 8;
+                const jitterAmp = 2 + d * 6;
+
+                const gx = (Math.random() - 0.5) * jitterAmp;
+                const gy = (Math.random() - 0.5) * jitterAmp;
+
+                ctx.font = `${baseSize}px 'DrainType', monospace`;
+
+                ctx.fillStyle = `rgba(255,0,0,${activeWord.opacity * 0.5})`;
+                ctx.fillText(activeWord.text, activeWord.x + gx + 1, activeWord.y + gy);
+
+                ctx.fillStyle = `rgba(0,255,255,${activeWord.opacity * 0.5})`;
+                ctx.fillText(activeWord.text, activeWord.x + gx - 1, activeWord.y + gy);
+
+                ctx.fillStyle = `rgba(229,229,229,${activeWord.opacity})`;
+                ctx.fillText(activeWord.text, activeWord.x + gx, activeWord.y + gy);
+
+                activeWord.opacity -= 0.02;
+                activeWord.life--;
+
+                if (activeWord.opacity <= 0 || activeWord.life <= 0) activeWord = null;
+            }
+
+            maybeCatastrophic();
+
+            if (catastrophic) {
+                if (catastrophic.type === "whiteout") {
+                    ctx.fillStyle = "rgba(255,255,255,0.9)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else if (catastrophic.type === "blackout") {
+                    ctx.fillStyle = "rgba(0,0,0,0.95)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else if (catastrophic.type === "tear") {
+                    ctx.fillStyle = "#fff";
+                    for (let i = 0; i < 5; i++) {
+                        const y = Math.random() * canvas.height;
+                        const h = 5 + Math.random() * 20;
+                        ctx.fillRect(0, y, canvas.width, h);
+                    }
+                }
+
+                catastrophic.life--;
+                if (catastrophic.life <= 0) catastrophic = null;
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        render();
+    </script>
+
+</body>
+
+</html>
