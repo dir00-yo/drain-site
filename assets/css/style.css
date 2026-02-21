@@ -1,7 +1,7 @@
 /* LOCAL TYPEWRITER FONT */
 @font-face {
     font-family: 'DrainType';
-    src: url('../fonts/tox.ttf') format('truetype');
+    src: url('assets/fonts/tox.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -117,4 +117,5 @@ button:hover {
     100% {
         transform: translateY(0);
     }
+
 }
