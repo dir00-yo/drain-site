@@ -1,0 +1,120 @@
+/* LOCAL TYPEWRITER FONT */
+@font-face {
+    font-family: 'DrainType';
+    src: url('../fonts/tox.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+h2 {
+    margin: 10px 0;
+    /* tighter than default */
+}
+
+.paths-list p,
+.paths-list a,
+.paths-list li {
+    margin: 2px ;
+    /* very tight spacing */
+    line-height: 0.9;
+    /* compact */
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0 20px;
+    /* side padding */
+    background: #161616;
+    color: #b8b8b8;
+    font-family: 'DrainType', monospace;
+    text-align: center;
+}
+
+a {
+    color: #b8b8b8;
+}
+body {
+    line-height: 0.9;
+    /* tighter spacing */
+}
+
+/* GRAIN BACKGROUND (CSS‑ONLY, NO IMAGE NEEDED) */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+
+    background:
+        repeating-radial-gradient(circle, rgba(255, 255, 255, 0.12) 0, rgba(255, 255, 255, 0.12) 1px, transparent 1px, transparent 3px),
+        repeating-radial-gradient(circle, rgba(255, 255, 255, 0.08) 0, rgba(255, 255, 255, 0.08) 1px, transparent 1px, transparent 4px);
+
+    opacity: 0.25;
+    mix-blend-mode: screen;
+}
+
+/* BUTTONS */
+button {
+    font-family: inherit;
+    cursor: pointer;
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 8px 20px;
+}
+
+button:hover {
+    background: #ccc;
+}
+
+#mascot {
+    position: fixed;
+    bottom: 20px;
+    /* adjust: 0 = bottom corner */
+    right: 300px;
+    /* or left: 20px; if you want it on the left */
+    width: 120px;
+    /* scale to taste */
+    opacity: 0;
+    animation: fadeIn 1.5s ease forwards, floaty 4s ease-in-out infinite;
+    pointer-events: none;
+    /* so it never blocks clicks */
+    z-index: 9999;
+    /* above everything but not obnoxious */
+}
+
+#mascot img {
+    width: 300px;
+    height: auto;
+    display: block;
+
+}
+
+/* Fade in */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Gentle float */
+@keyframes floaty {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
